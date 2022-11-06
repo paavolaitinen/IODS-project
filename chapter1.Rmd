@@ -11,3 +11,11 @@ date()
 ```
 The text continues here.
 
+I hope everything is now installed correctly. Learning **Git/Github** seems useful and it is something that should prove to be useful in the future. I am a bit nervous about using R as I'm not very familar with it but we'll see how this goes. 
+
+# Thoughts about Exercise set 1
+R really seems like a good tool for building graphs and plots and the logic seems pretty straightforward. However, it will take time to learn the syntax and all the commands. It is inevitable that learning new software feels at first like an avalanche of information, but this tutorial for R was nice in that it teaches one thing at a time. 
+
+[my GitHub repository](https://github.com/paavolaitinen/IODS-project) 
+
+
