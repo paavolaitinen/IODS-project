@@ -1,4 +1,4 @@
-# Insert chapter 2 title here
+# Chapter 2) Regression and model validation
 
 *Describe the work you have done this week and summarize your learning.*
 
@@ -10,4 +10,55 @@
 date()
 ```
 
-Here we go again...
+## 1) Reading data
+
+```{r}
+lrn14 <- read.table("learning2014.csv", sep=",", header=TRUE)
+
+# dimensions of the data
+dim(lrn14)
+# structure of the data
+str(lrn14)
+```
+This is survey data from 2014 of Approaches to learning.This is a subset of original learning2014 data, from which 7 variables were picked:gender, age, attitude, deep, stra, surf and points. 'Deep'(deep learning), 'stra' (strategic learning) and 'surf' (superficial learning) have been combined from their related items. You can find more information about the dataset from [learning2014](https://www.mv.helsinki.fi/home/kvehkala/JYTmooc/JYTOPKYS3-meta.txt)  
+
+## 2) Overview of data
+
+```{r}
+library(ggplot2)
+library(GGally)
+p <- ggpairs(lrn14, mapping = aes(col = gender, alpha = 0.3), lower = list(combo = wrap("facethist", bins = 20)))
+p
+```
+Looking at the data, there are more females than males. Age is the only variable that is clearly skewed (to the left), while other variables are more evenly distributed. Srongest correlations are found between deep learning and surface learning (-0.32), attitude and point (0.44). Additionally, surface leaning was correlated with strategic learning (-0.16) and attitude (-0.18). All these aforementioned correlations were in same direction in both sexes.
+
+## 3) and 4) Linear regression model
+
+```{r}
+model_1 <- lm(points ~ attitude + stra + surf, data = lrn14)
+
+summary(model_1)
+
+model_2 <- lm(points ~ attitude, data = lrn14)
+summary(model_2)
+```
+Initially, I chose attitude, strategic learning and surface learning as explanatory variables for points in linear regression model as they were the variables showing highest correlation with points. However, attitude was the only statistically significant predictor of points (Coeff 0.34, p-value <0.001), while the model explained 20% of variation in points (Adjusted R squared). 
+After removing non significant variables from the model, attitude predicted points with Coeff 0.35 (p-value <0.001), while the model explained 19% of variation in points. Taken together, based on this model, attitude was the best predictor of points: better attitude predicted more points. 
+
+## 5) Diagnostic plots 
+Residuals vs Fitted values, Normal QQ-plot and Residuals vs Leverage
+```{r}
+par(mfrow = c(2,2))
+plot(model_2, which = c(1, 2, 5))
+```
+
+The main assumptions of Linear regression model are:   
+* linear relationship between response value and eplanatory value     
+* errors (residuals) have constant variance across all values of eplanatory variable  
+* errors are independent of each other  
+* errors have a normal distribution   
+
+Residuals vs fitted should not show a pattern where distribution of residuals varies along fitted values. In the figure above residuals are nicely evenly distributed.  
+QQ-plot should show a line if residuals are normally distributed. Figure above shows that the data is pretty much following the line excluding few outliers.  
+Residuals vs leverage should not show points outside Cook's distance, which holds for the figure above.  
+Taken together, the assumptions of linear regression model hold true for the current model. 
