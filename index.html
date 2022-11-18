@@ -200,7 +200,7 @@ pre code {
 <pre class="r"><code># This is a so-called &quot;R chunk&quot; where you can write R code.
 
 date()</code></pre>
-<pre><code>## [1] &quot;Fri Nov 18 12:00:12 2022&quot;</code></pre>
+<pre><code>## [1] &quot;Fri Nov 18 12:07:38 2022&quot;</code></pre>
 <p>The text continues here.</p>
 <p>I hope everything is now installed correctly. Learning <strong>Git/Github</strong> seems useful and it is something that should prove to be useful in the future. I am a bit nervous about using R as I’m not very familar with it but we’ll see how this goes.</p>
 </div>
@@ -219,7 +219,7 @@ date()</code></pre>
 <li>Assume the reader has no previous knowledge of your data or the more advanced methods you are using.</li>
 </ul>
 <pre class="r"><code>date()</code></pre>
-<pre><code>## [1] &quot;Fri Nov 18 12:00:12 2022&quot;</code></pre>
+<pre><code>## [1] &quot;Fri Nov 18 12:07:38 2022&quot;</code></pre>
 <div id="reading-data" class="section level2">
 <h2>1) Reading data</h2>
 <pre class="r"><code>lrn14 &lt;- read.table(&quot;learning2014.csv&quot;, sep=&quot;,&quot;, header=TRUE)
@@ -318,7 +318,7 @@ Taken together, the assumptions of linear regression model hold true for the cur
 <div id="chapter-3-logistic-regrsession" class="section level1">
 <h1>Chapter 3) Logistic regrsession</h1>
 <pre class="r"><code>date()</code></pre>
-<pre><code>## [1] &quot;Fri Nov 18 12:00:24 2022&quot;</code></pre>
+<pre><code>## [1] &quot;Fri Nov 18 12:07:49 2022&quot;</code></pre>
 <div id="reading-data-1" class="section level2">
 <h2>Reading data</h2>
 <p>The data consists of student performance data in two Portuguese schools, collected by reports and questionnaires. It consists of two datasets from two different subjects: math and Portuguese. These datasets were combined and the variables of the combined dataset are printed below. In addition, two variables were calculated: <em>alc_use</em> is the average alcohol use from weekdays and weekends and <em>high_use</em> tells is true when <em>alc_use</em> is over <em>2</em></p>
@@ -572,7 +572,7 @@ cv &lt;- cv.glm(data = alc, cost = loss_func, glmfit = m, K = 10)
 
 # average number of wrong predictions in the cross validation
 cv$delta[1]</code></pre>
-<pre><code>## [1] 0.2594595</code></pre>
+<pre><code>## [1] 0.2621622</code></pre>
 <p>The test set error of my model with 10-fold cross-validation is ~0.27, which is slightly worse than the model introduced in Exercise set.</p>
 </div>
 </div>
