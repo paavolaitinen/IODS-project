@@ -1,0 +1,138 @@
+# Chapter 3) Logistic regrsession 
+
+```{r}
+date()
+```
+
+## Reading data 
+
+The data consists of student performance data in two Portuguese schools, collected by reports and questionnaires. It consists of two datasets from two different subjects: math and Portuguese. These datasets were combined and the variables of the combined dataset are printed below. In addition, two variables were calculated: *alc_use* is the average alcohol use from weekdays and weekends and *high_use* tells is true when *alc_use* is over *2*  
+
+More information (including variable information) and the original dataset can be found from [UCI_machine_learning_repository](https://archive.ics.uci.edu/ml/datasets/Student+Performance)
+
+```{r}
+alc <- read.csv("C:/Users/labpaavo/IODS-project/data/alc.csv")
+
+colnames(alc)
+```
+
+## Variables of interest in relation to alcohol consumption and hypotheses
+For the variables of interest in relation to high/low alcohol consumption I have chosen: sex, Pstatus, studytime and absences. The hypotheses are that:  
+- being a male predicts high alcohol consumption  
+- parents living apart predicts high alcohol consumption  
+- low studytime predicts high alcohol consumption  
+- high absences predicts high alcohol consumption  
+
+## Exploring the chosen variables 
+Numerically and graphically explore the distributions of your chosen variables and their relationships with alcohol consumption (use for example cross-tabulations, bar plots and box plots). Comment on your findings and compare the results of your exploration to your previously stated hypotheses. (0-5 points)
+
+
+```{r}
+
+library(descr)
+library(dplyr)
+library(ggplot2)
+
+my_variables = c("high_use", "sex", "Pstatus", "studytime", "absences")
+my_data <- alc[my_variables]
+
+summary(my_data)
+CrossTable(my_data$high_use, my_data$sex)
+CrossTable(my_data$high_use, my_data$Pstatus)
+CrossTable(my_data$high_use, my_data$studytime)
+my_data %>% group_by(high_use) %>% summarise(count = n(), mean_absences = mean(absences))
+
+g1 <-  ggplot(data = my_data, aes(x = sex))
+g1 + geom_bar() + facet_wrap("high_use") 
+
+g2 <-  ggplot(data = my_data, aes(x = Pstatus))
+g2 + geom_bar() + facet_wrap("high_use") 
+
+g3 <-  ggplot(data = my_data, aes(x = studytime))
+g3 + geom_bar() + facet_wrap("high_use") 
+
+g4 <-  ggplot(data = my_data, aes(x = absences))
+g4 + geom_bar() + facet_wrap("high_use") 
+
+
+```
+
+Looking at data, it seems that first of all there are more students with low alcohol consumption (259) compared to high- (111). Absences is clearly skewed to left (less absences). It seems that high consumption group has more males (63%) compared to low consumption (41%). Parental status seems to be similarly distributed between the grpoups. In regards to studytime, high consumption group has notably higher frequency of students who study very little (37.8% vs 21.6%). Finally, high consumption group has higher mean absences (6.4), compared to low consumption group (3.7). Taken together, it seems that sex, studytime and absences could maybe predict alcohol consumptions, whereas parental status seems to be pretty evenly distributed between groups and thus will unlikely predict alcohol consumption.   
+
+
+## Logistic regression
+
+```{r}
+m <- glm(high_use ~ sex + Pstatus + studytime + absences, data = my_data, family = "binomial")
+summary(m)
+
+OR <- coef(m) %>% exp
+CI <- confint(m) %>% exp
+cbind(OR, CI)
+```
+
+Logistic regression models showed that sex, studytime and absences were significant predictors high/low alcohol consumptions:  
+sexM log odds .85 (p-value <0.001) 
+studytime log odds -.42 (p-value < 0.01), meaning that for unit increase in studytime the log odds for being n high alcohol consumption decrease by 0.42.  
+absences log odds .09 (p-value <0.001), meaning that for each absence the log odds for high alcohol consumption changes by 0.09.   
+
+The odds for a male being in high alcohol consumption groups over a female is 2.3 (CI 1.4; 3.9).
+For unit increase in studytime the odds of being in high alcohol consumption group decrese by 34% (CI 0.48; 0.90), note that studytime had four possible values  corresponging to <2 hours, 2 to 5 hours, 5 to 10 hours and  >10 hours.
+For each absence the odds of being in high alcohol consumption group increase by 9.3% (CI 4.7%; 14.8%).  
+
+Against the initial hypothesis parental status did not predict alcohol consumption, however this was could be predicted already by exploring the data. The effect of sex, studytime and absences were as hypothesized as being a male, lower studytime and higher absences predicted being in high alcohol consumption group. 
+
+
+## Predictive power of the model
+
+```{r}
+# drop parental status from the model as it wasn't statistically significant predictor
+new_model <- glm(high_use ~ sex + studytime + absences, data = my_data, family = "binomial")
+
+probabilities <- predict(new_model, type = "response")
+my_data <- mutate(my_data, probability = probabilities)
+my_data <- mutate(my_data, prediction = (probability > 0.5))
+
+table(high_use = my_data$high_use, prediction = my_data$prediction)
+
+
+loss_func <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+
+# training error 
+loss_func(class = my_data$high_use, prob = my_data$probability)
+
+
+g <- ggplot(my_data, aes(x = probability, y = high_use, col = prediction))
+g + geom_point()
+
+```
+
+The model resulted in 250 true negatives, 25 true positives, 86 false negatives and 9 false positives.  
+The training error of the model is 25.7%. 
+
+
+## 10-fold cross-validation 
+
+```{r}
+loss_func <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+
+# compute the average number of wrong predictions in the (training) data
+loss_func(class = my_data$high_use, prob = my_data$probability)
+
+# K-fold cross-validation
+library(boot)
+cv <- cv.glm(data = alc, cost = loss_func, glmfit = m, K = 10)
+
+# average number of wrong predictions in the cross validation
+cv$delta[1]
+```
+
+The test set error of my model with 10-fold cross-validation is ~0.27, which is slightly worse than the model introduced in Exercise set.  
+
+
