@@ -1,0 +1,198 @@
+# Chapter 4) Clustering
+
+```{r}
+date()
+```
+
+## Reading data and exploring it
+
+```{r}
+library(MASS)
+library(corrplot)
+library(tidyr)
+library(ggplot2)
+data("Boston")
+
+str(Boston)
+dim(Boston)
+
+```
+
+Boston data consists of 14 variables (and 506 observations) and it is about housing values in suburbs of Boston. Details and full descriptions of the variables can be found from [Boston](https://stat.ethz.ch/R-manual/R-devel/library/MASS/html/Boston.html).
+
+## Graphical overview of the data 
+
+```{r}
+#summaries of the variable data
+summary(Boston)
+pairs(Boston)
+#library(Hmisc)
+boston_df <- as.data.frame(Boston)
+#hist.data.frame(boston_df) this plot gives an error while knitting the index file so unfortunately can't display it
+
+
+cor_matrix <- cor(Boston) %>% round(digits = 2)
+corrplot(cor_matrix, method="circle", type = "upper", cl.pos = "b", tl.pos = "d", tl.cex = 0.6)
+```
+
+The figure of pairs function was so difficult to read on my laptop, so I ended up drawing also histograms to look at the distributions of the variables (unfortunately it can't be displayed while knitting index because of the plot size, code commented out). Many variables are heavily skewed. The only variables close to normal distribution seem to be 'average number of rooms per dwelling'(rm) and 'median value of owner-occupied homes in $1000s' (medv).  
+
+The correlation plot shows the relationships between the variables. Strongest negative correlations can be found between:  
+* weighted mean of distances to five Boston employment centres (dis) and proportion of owner-occupied units built prior to 1940 (age)  
+* dis and nitrogen oxides concentration (nox)  
+* dis and proportion of non-retail business acres per town (indus)  
+* lower status of the population percent (lastat) and median value of owner-occupied homes in $1000s (medv)
+
+Strongest positive correlation is between index of accessibility to radial highways (rad) and full-value property-tax rate per $10,000 (tax)
+
+
+## Standardize the dataset 
+
+```{r}
+
+boston_scaled <- as.data.frame(scale(Boston))
+boston_scaled$crim <- as.numeric(boston_scaled$crim)
+# summaries of the scaled variables
+summary(boston_scaled)
+# summary of the scaled crime rate
+summary(boston_scaled$crim)
+
+# create a quantile vector of crim and print it
+bins <- quantile(boston_scaled$crim)
+
+# create a categorical variable 'crime'
+crime <- cut(boston_scaled$crim, breaks = bins, include.lowest = TRUE, label = c("low", "med_low", "med_high", "high"))
+
+# look at the table of the new factor crime
+table(crime)
+
+# remove original crim from the dataset
+boston_scaled <- dplyr::select(boston_scaled, -crim)
+
+# add the new categorical value to scaled data
+boston_scaled <- data.frame(boston_scaled, crime)
+
+
+ind <- sample(nrow(boston_scaled),  size = nrow(boston_scaled) * 0.8)
+train <- boston_scaled[ind,]
+test <- boston_scaled[-ind,]
+correct_classes <- test$crime
+test <- dplyr::select(test, -crime)
+boston_scaled$crime <- factor(boston_scaled$crime, levels = c("low", "med_low", "med_high", "high"))
+
+```
+
+## Linear discriminant analysis
+
+```{r}
+# linear discriminant analysis
+lda.fit <- lda(crime ~ ., data = train)
+
+# the function for lda biplot arrows
+lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "black", tex = 0.75, choices = c(1,2)){
+  heads <- coef(x)
+  arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+
+# target classes as numeric
+classes <- as.numeric(train$crime)
+
+# plot the lda results
+plot(lda.fit, dimen = 2, col = classes)
+lda.arrows(lda.fit, myscale = 1)
+
+```
+
+## Predict classes with LDA model
+
+```{r}
+# predict classes with test data
+lda.pred <- predict(lda.fit, newdata = test)
+
+# cross tabulate the results
+table(correct = correct_classes, predicted = lda.pred$class) 
+
+
+```
+
+LDA model seems to predict classes quite well with accuracy of ~75% (varying between seeds). The model performed best in classifying high crime rates. 
+
+## k-means clustering
+
+```{r}
+# reloading the dataset
+library(MASS)
+data("Boston")
+
+# standardizing the dataset
+boston_scaled2 <- as.data.frame(scale(Boston))
+
+# distances between observations
+dist_eu <- dist(boston_scaled2)
+# look at the summary of the distances
+summary(dist_eu)
+
+```
+
+
+### Looking for optimal number of clusters
+
+```{r}
+library(ggplot2)
+set.seed(13)
+
+k_max <- 10
+
+# calculate the total within sum of squares
+twcss <- sapply(1:k_max, function(k){kmeans(boston_scaled2, k)$tot.withinss})
+
+# visualize the results
+qplot(x = 1:k_max, y = twcss, geom = 'line')
+
+ 
+```
+
+The optimal number of clusters is when the value of total WCSS (y-axis) changes radically, here it seems to be around two clusters.
+
+```{r}
+# k-means clustering
+km <- kmeans(boston_scaled2, centers = 2)
+
+# plot the Boston dataset with clusters
+pairs(boston_scaled2[1:6], col = km$cluster) 
+pairs(boston_scaled2[7:14], col = km$cluster) 
+
+```
+
+I plotted the clusters in two separate plots, since the figures are otherwise two small for me to see in laptop, but this way I don't see all the pairs. Overall it looks like two clusters works nicely in most of the pairs. 
+
+
+
+### Super-Bonus: 
+
+matrix product
+```{r}
+model_predictors <- dplyr::select(train, -crime)
+# check the dimensions
+dim(model_predictors)
+dim(lda.fit$scaling)
+# matrix multiplication
+matrix_product <- as.matrix(model_predictors) %*% lda.fit$scaling
+matrix_product <- as.data.frame(matrix_product)
+```
+
+
+
+```{r}
+library(plotly)
+# color is the crime classes of exercise set: classes is determined earlier as classes <- as.numeric(train$crime) 
+plot_ly(x = matrix_product$LD1, y = matrix_product$LD2, z = matrix_product$LD3, type= 'scatter3d', mode='markers', color = classes)
+
+```
+
+
+

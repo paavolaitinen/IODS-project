@@ -252,6 +252,7 @@ library(dplyr)
 library(MASS)
 boston_scaled <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/boston_scaled.txt",
                             sep=",", header = T)
+boston_scaled$crime <- factor(boston_scaled$crime, levels = c("low", "med_low", "med_high", "high"))
 ```
 
 ### Instructions
@@ -313,6 +314,7 @@ train <- boston_scaled[ind,]
 test <- boston_scaled[-ind,]
 correct_classes <- test$crime
 test <- dplyr::select(test, -crime)
+boston_scaled$crime <- factor(boston_scaled$crime, levels = c("low", "med_low", "med_high", "high"))
 ```
 
 ### Instructions
@@ -382,6 +384,7 @@ correct_classes <- test$crime
 test <- dplyr::select(test, -crime)
 
 lda.fit = lda(crime ~ ., data=train)
+boston_scaled$crime <- factor(boston_scaled$crime, levels = c("low", "med_low", "med_high", "high"))
 ```
 
 ### Instructions
@@ -399,10 +402,10 @@ Hints:
 # lda.fit, correct_classes and test are available
 
 # predict classes with test data
-lda.pred <- predict(lda.fit, newdata = "change me!")
+#lda.pred <- predict(lda.fit, newdata = jotain tähän)
 
 # cross tabulate the results
-table(correct = "change me!", predicted = "change me!")
+# table(correct = , predicted = lda.pred$class) # MITÄ TÄSSÄ PITÄÄ TEHDÄ???
 
 ```
 
@@ -440,13 +443,13 @@ Hints:
 # Boston dataset is available
 
 # euclidean distance matrix
-dist_eu <- "change me!"
+dist_eu <- dist(Boston)
 
 # look at the summary of the distances
-
+summary(dist_eu)
 
 # manhattan distance matrix
-dist_man <- "change me!"
+dist_man <- dist
 
 # look at the summary of the distances
 
@@ -486,10 +489,10 @@ Hints:
 # Boston dataset is available
 
 # k-means clustering
-km <- kmeans(Boston, centers = "change me!")
+km <- kmeans(Boston, centers = 3)
 
 # plot the Boston dataset with clusters
-pairs(Boston, col = "change me!")
+pairs(Boston[6:10], col = km$cluster) 
 
 
 
@@ -532,7 +535,7 @@ Hints:
 set.seed(123)
 
 # determine the number of clusters
-k_max <- "change me!"
+k_max <- 10
 
 # calculate the total within sum of squares
 twcss <- sapply(1:k_max, function(k){kmeans(Boston, k)$tot.withinss})
@@ -541,7 +544,7 @@ twcss <- sapply(1:k_max, function(k){kmeans(Boston, k)$tot.withinss})
 qplot(x = 1:k_max, y = twcss, geom = 'line')
 
 # k-means clustering
-km <- kmeans(Boston, centers = "change me!")
+km <- kmeans(Boston, centers = 10)
 
 # plot the Boston dataset with clusters
 pairs(Boston, col = km$cluster)
