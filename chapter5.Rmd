@@ -1,0 +1,116 @@
+# Chapter 5) Dimensionality reduction techniques
+
+```{r}
+date()
+```
+
+## Overview of the data
+
+
+The variables of this dataset are:  
+edu2_fm -  Proportion of females with at least secondary education divided by the proportion of males with at least secondary education  
+labofm - Proportion of females in the labour force divided by the proportion of males in labour force  
+edu_exp - Expected years of schooling  
+life_exp - life expectancy  
+gni - Gross National Income per capita  
+mat_mor - Maternal mortality ratio  
+ado_birth - Adolescent birth rate  
+parli_perc - Percetange of female representatives in parliament  
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(GGally)
+library(ggplot2)
+library(corrplot)
+library(FactoMineR)
+
+human <- read.csv("C:/Users/labpaavo/IODS-project/data/human.csv")
+
+str(human)
+dim(human)
+
+summary(human)
+
+p <- ggpairs(human, lower = list(combo = wrap("facethist", bins = 20)))
+p
+
+cor(human) %>% corrplot
+
+```
+
+From the data we can see that life expectancy is skewed towards right, whereas GNI, maternal mortality ratio and adolescent birth rate are heavily skewed to left. Many variables are strongly correlated with each other, except for gender ratio in labor force (labofm) and gender ratio in parliment. 
+
+## PCA on raw data
+
+```{r}
+# perform principal component analysis (with the SVD method)
+pca_human <- prcomp(human)
+
+biplot(pca_human, choices = 1:2, cex = c(0.6, 1), col = c("grey40", "deeppink2"))
+
+summary(pca_human)
+
+```
+
+We can see that with raw data the 1st principal component accounts for basically all the variation (99,999%). The figure shows that the variable responsible for this is GNI. 
+
+## PCA on standardized data
+
+```{r}
+human_std <- scale(human)
+pca_human_std <- prcomp(human_std)
+
+biplot(pca_human_std, choices = 1:2, cex = c(0.6, 1), col = c("grey40", "deeppink2"))
+
+summary(pca_human_std)
+```
+
+Now PC1 accounts for ~54% of variation compared to 99.99% previously. This is because the raw values of GNI vary from ~20000 to ~500, whereas i.e., labofm and edu2_fm can only have values between 0 and 1. Thus, if we only use absolute values, GNI will account for practically all the variation in the data. This can be resolved by standardizing the data, which makes the changes in variables more comparable. 
+
+## Interpretation of the first two PC dimensions
+It seems that the in the first two principal component dimensions the variables form three 'groups'. Maternal mortality ratio and adolescent birth rate to seem to be close to each other, meaning that the two are closely related to each other in this data. Another pair can be seen between gender ratio in labor force and the percentage of females in parliment. The rest of the variables are grouped together. 
+
+## Tea dataset
+
+```{r}
+tea <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/tea.csv", 
+                  sep = ",", header = T)
+dim(tea)
+str(tea)
+#View(tea)
+ind <- 1:ncol(tea)
+tea[, ind] <- lapply(tea[, ind], as.factor)
+str(tea)
+
+library(Hmisc)
+hist.data.frame(tea[1:9])
+hist.data.frame(tea[10:18])
+hist.data.frame(tea[19:28])
+hist.data.frame(tea[29:36])
+
+
+```
+
+## MCA on tea data
+
+The categorical variables chosen for the MCA were: Tea (black, earl grey, green), How (alone, lemon, milk, other), how (tea bag, tea bag + unpackagerd, unpackaged), sugar (no sugar, sugar), where (chain store, tea shop, chain store + tea shop) and lunch (lunch, not lunch).
+
+
+```{r}
+# select some columns 
+keep_columns <- c("Tea", "How", "how", "sugar", "where", "lunch")
+tea_time <- select(tea, keep_columns)
+
+
+mca <- MCA(tea_time, graph = FALSE)
+
+# summary of the model
+summary(mca)
+
+# visualize MCA
+plot(mca, invisible=c("ind"), graph.type = "classic", habillage = "quali")
+plot(mca, invisible=c("var"), graph.type = "classic")
+```
+
+The MCA factor map shows gactors that are close to each other in the data. We can see that tea bought at tea shop is usually unpackaged. Another group can be seen with variables that describe incosistent behavior: buying tea from both chain stores and tea shops is related to having both tea bags and unpackaged teas as well as non-consistent way of drinking tea (other). The other figure shows the individuals in the MCA factor map. 
