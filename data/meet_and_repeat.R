@@ -23,7 +23,9 @@ BPRSL <-  pivot_longer(BPRS, cols=-c(treatment,subject),names_to = "weeks",value
 # add 'week' variable
 BPRSL <-  BPRSL %>% mutate(week = as.integer(substr(weeks,5,5)))
 glimpse(BPRSL)
-
+colnames(BPRSL)
+# now instead of each week as a column, there are 5 columns in total: treatment, subject, weeks (in characters), bprs and week in int
+# now each row is one time point for one individual, whereas wide form shows all the time points for one individual
 
 # RATS
 # checking data 
@@ -42,7 +44,9 @@ RATS$Group <- factor(RATS$Group)
 RATSL <- pivot_longer(RATS, cols = -c(ID, Group),names_to = "WD",values_to = "Weight") %>% 
   mutate(Time = as.integer(substr(WD, 3,4))) %>% arrange(Time)
 glimpse(RATSL)
-
+colnames(RATSL)
+# now instead of each week as a column, there are 5 columns in total: ID, Group, WD (in chr), Weight and Time (in int)
+# now each row is one time point for one animal, whereas wide form shows all the time points for one animal
 
 # write the long form data as csv
 write_csv(BPRSL,"C:/Users/labpaavo/IODS-project/data/BPRSL.csv") 
